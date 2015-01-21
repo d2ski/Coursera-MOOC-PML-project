@@ -1,0 +1,89 @@
+---
+title: "Coursera Practical Machine Learning Assignment"
+author: "d2ski"
+date: "Wednesday, January 21, 2015"
+output: html_document
+---
+
+### Background  
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+### Assignment goals
+
+The main goal of the project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set.
+
+1. Create a report describing how the model was built, how cross validation was use, the expected out of sample error, the choices made.  
+2. Apply the machine learning algorithm to the 20 test cases available in the test data below.  
+
+### Assignment data
+
+The training data for this project are available here: 
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here: 
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+* for reproducibility if necessary the data must be downloaded to the source directory
+
+GitHub: https://github.com/d2ski/Coursera-MOOC-PML-project
+
+### Brief summary of selected approach
+
+The task is a classification problem. Random Forest algorithm was selected for building the model. Main reason for this is high accuracy of random forests and a number of variables in the data set which is shown below. Also in random forests, there is no need for cross-validation or a separate test set to get an unbiased estimate of the test set error. It is estimated internally, during the run (OOB error)[1].
+
+To determine the out of sample error hold-out cross validation technique was used, that means splitting the set into a training and one test set (75% and 25% for the assignment).
+
+### Making the model  
+
+1. `caret` and `randomForest` packages are required, setting the seed for reproducibility:  
+
+```{r packages,warning=FALSE,message=FALSE}
+require(caret)
+require(randomForest)
+set.seed(777)
+```
+
+2. Loading the data used for 1 part of the assignment:  
+
+```{r data}
+data <- read.csv("pml-training.csv", na.strings = c("", "#DIV/0!", "NA"), header = T)
+```
+
+3. Splitting the set into a training (75%) and one test (25%) set, excluding unnecessary variables not related to movement type, but kind of user data ('X', 'user_name', timestamps) and related to algorithm of original research ('new_window', 'num_window'):  
+
+```{r splitdata}
+inTrain <- createDataPartition(y=data$classe, p=0.75, list=FALSE)
+training <- data[inTrain, -c(1:7)]
+testing <- data[-inTrain, -c(1:7)]
+```
+
+4. The data set contains a large set of variables, so going to remove columns with a lot of NA's and zero variance covariates to reduce dimensions of the training set:
+
+```{r removingvars}
+dim(training)
+
+# Excluding columns with a lot of NAs
+naNums <- sapply(training, function(x) sum(is.na(x)))
+table(naNums)
+
+# As it may be seen from the table above some columns have almost all NAs if have any NA in it, so just exlcuding all columns with NAs
+training <- training[, naNums == 0]
+
+# Removing zero variance covariates
+nsv <- nearZeroVar(training, saveMetrics = TRUE)
+training <- training[,!nsv$nzv]
+
+dim(training)
+```
+
+5. Fitting Random forest, `classe` vs all features:
+
+```{r algo}
+modFit <- randomForest(classe ~ ., data=training)
+modFit
+```
+---
+References:
+[1]: https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
