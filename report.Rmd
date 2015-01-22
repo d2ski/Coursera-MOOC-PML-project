@@ -84,6 +84,24 @@ dim(training)
 modFit <- randomForest(classe ~ ., data=training)
 modFit
 ```
+
+6. Estimating out of sample error, using mislcassification error rate on testing set.
+
+```{r misclas}
+prediction <- predict(modFit, testing, type="response")
+table(prediction == testing$classe)
+mse <- sum(prediction != testing$classe) / length(testing$classe)
+```
+
+Expected out of sample error (MSE) is `r round(mse,4)`.
+
+### Applying the algorithm to the 20 test cases available (2nd part of assignment)
+
+``` {r test2}
+test_data <- read.csv("pml-testing.csv", na.strings = c("", "#DIV/0!", "NA"), header = T)
+prediction2 <- predict(modFit, test_data)
+prediction2
+```
 ---
 References:
 [1]: https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm

@@ -4,6 +4,7 @@ set.seed(777)
 
 data <- read.csv("pml-training.csv", na.strings = c("", "#DIV/0!", "NA"), header = T)
 
+# Going to use hold-out cross validation technique to determine out of sample error, which means splitting the set into a training and one test set
 inTrain <- createDataPartition(y=data$classe, p=0.75, list=FALSE)
 
 # Excluding unnecessary variables not related to movement type, but kind of user data ('X','user_name', timestamps) and
